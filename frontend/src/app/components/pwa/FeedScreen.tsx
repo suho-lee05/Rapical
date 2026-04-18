@@ -88,35 +88,35 @@ export function FeedScreen() {
 
   return (
     <div className="min-h-screen bg-background pb-16">
-      <header className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-border">
-        <div className="flex items-center justify-between h-12 px-4 max-w-6xl mx-auto">
+      <header className="surface-header">
+        <div className="app-screen flex items-center justify-between h-[52px]">
           <div>
-            <h1 className="text-[16px] text-foreground">Announcements</h1>
+            <h1 className="text-[16px] text-foreground tracking-tight">Announcements</h1>
             <p className="text-[11px] text-muted-foreground">
               {participantSession.SpaceName} · {participantSession.IsGuest ? "Guest" : participantSession.Nickname}
             </p>
           </div>
           <button
             onClick={() => navigate("/pwa/search")}
-            className="p-1.5 text-muted-foreground hover:text-foreground transition"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/70 rounded-lg transition"
           >
             <SearchIcon className="w-5 h-5" />
           </button>
         </div>
       </header>
 
-      <div className="max-w-[600px] mx-auto px-4 pt-3">
+      <div className="app-screen pt-4">
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => navigate("/pwa/ask")}
-            className="flex-1 bg-white rounded-2xl py-3 text-center shadow-sm border border-border/40"
+            className="surface-card flex-1 py-3 text-center"
           >
             <span className="text-lg block">💬</span>
             <span className="text-[11px] text-foreground mt-0.5 block">Ask</span>
           </button>
           <button
             onClick={() => navigate("/pwa/my-q")}
-            className="flex-1 bg-white rounded-2xl py-3 text-center shadow-sm border border-border/40"
+            className="surface-card flex-1 py-3 text-center"
           >
             <span className="text-lg block">📥</span>
             <span className="text-[11px] text-foreground mt-0.5 block">My Q</span>
@@ -130,7 +130,7 @@ export function FeedScreen() {
           {loading ? (
             <PinnedSkeleton />
           ) : pinnedPosts.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-border/40 px-4 py-6 text-[13px] text-muted-foreground">
+            <div className="surface-card px-4 py-6 text-[13px] text-muted-foreground">
               아직 고정된 공지가 없습니다.
             </div>
           ) : (
@@ -139,7 +139,7 @@ export function FeedScreen() {
                 <button
                   key={post.FeedPostID}
                   onClick={() => navigate(`/pwa/feed/${post.FeedPostID}`)}
-                  className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm border border-border/40 text-left"
+                  className="surface-card w-full flex items-center gap-3 px-4 py-3 text-left"
                 >
                   <span className="text-xl shrink-0">{post.PostType === "faq" ? "❓" : "📌"}</span>
                   <div className="flex-1 min-w-0">
@@ -168,7 +168,7 @@ export function FeedScreen() {
               {latestPosts.map((post) => (
                 <div
                   key={post.FeedPostID}
-                  className="bg-white rounded-2xl shadow-sm border border-border/40 overflow-hidden"
+                  className="surface-card overflow-hidden"
                 >
                   <button
                     onClick={() => navigate(`/pwa/feed/${post.FeedPostID}`)}
@@ -225,7 +225,7 @@ export function FeedScreen() {
 
       <button
         onClick={() => navigate("/pwa/ask")}
-        className="fixed bottom-20 right-4 lg:right-8 bg-primary text-white rounded-2xl px-4 py-3 shadow-lg flex items-center gap-2 z-40"
+        className="fixed bottom-20 right-4 lg:right-8 bg-primary text-white rounded-2xl px-4 py-3 shadow-[0_12px_28px_rgba(22,163,74,0.35)] flex items-center gap-2 z-40"
       >
         <MessageCircleQuestion className="w-4 h-4" />
         <span className="text-[13px]">Ask</span>

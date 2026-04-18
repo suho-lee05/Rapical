@@ -16,20 +16,39 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [activeSpace, setActiveSpace] = useState<Space | null>(null);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [selectedSpaceId, setSelectedSpaceId] = useState<number | null>(null);
   const [loadingSpace, setLoadingSpace] = useState(true);
   const [joining, setJoining] = useState(false);
+
+  const selectedSpace = useMemo(
+    () => spaces.find((space) => space.SpaceID === selectedSpaceId) || null,
+    [spaces, selectedSpaceId],
+  );
 
   useEffect(() => {
     async function loadSpace() {
       try {
-        const activeSpaces = await api.getSpaces({ status: "active" });
-        const fallbackSpaces = activeSpaces.length ? activeSpaces : await api.getSpaces();
-        const primarySpace = fallbackSpaces[0] || null;
-        setActiveSpace(primarySpace);
-        if (primarySpace) {
-          setJoinCode(primarySpace.JoinCode);
-        }
+        const allSpaces = await api.getSpaces();
+        setSpaces(allSpaces);
+
+        const activeSpaces = allSpaces
+          .filter((space) => space.Status === "active")
+          .sort(
+            (a, b) =>
+              new Date(b.UpdatedAt).getTime() - new Date(a.UpdatedAt).getTime(),
+          );
+
+        const fallbackSpaces = allSpaces
+          .filter((space) => space.Status !== "archived")
+          .sort(
+            (a, b) =>
+              new Date(b.UpdatedAt).getTime() - new Date(a.UpdatedAt).getTime(),
+          );
+
+        const primarySpace = activeSpaces[0] || fallbackSpaces[0] || null;
+        setSelectedSpaceId(primarySpace?.SpaceID || null);
+        setJoinCode(primarySpace?.JoinCode || "");
       } catch (error) {
         const message = error instanceof Error ? error.message : "행사 정보를 불러오지 못했습니다.";
         toast.error(message);
@@ -48,6 +67,11 @@ export function LoginPage() {
     }, 2500);
     return () => window.clearTimeout(id);
   }, []);
+
+  useEffect(() => {
+    if (!selectedSpace) return;
+    setJoinCode(selectedSpace.JoinCode);
+  }, [selectedSpace?.SpaceID]);
 
   const resolvedNickname = useMemo(() => {
     if (nickname.trim()) return nickname.trim();
@@ -82,9 +106,9 @@ export function LoginPage() {
 
   const handleGuestBrowse = async () => {
     try {
-      const activeSpaces = await api.getSpaces({ status: "active" });
-      const allSpaces = activeSpaces.length ? activeSpaces : await api.getSpaces();
-      const space = activeSpace || allSpaces[0];
+      const activeSpaces = spaces.filter((space) => space.Status === "active");
+      const fallbackSpaces = spaces.filter((space) => space.Status !== "archived");
+      const space = selectedSpace || activeSpaces[0] || fallbackSpaces[0];
       if (!space) {
         toast.error("Space가 없습니다. 관리자에서 Space를 먼저 생성해 주세요.");
         return;
@@ -101,33 +125,59 @@ export function LoginPage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-5">
       <Toaster position="top-center" richColors />
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-7">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-primary text-[11px] mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            Rapical Live Entry
+          </div>
           <h1 className="text-[36px] tracking-tight text-primary">Rapicial</h1>
           <p className="text-[13px] text-muted-foreground mt-1">Anonymous attendee entry</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-border/50 mb-6">
+        <div className="surface-card p-5 mb-6">
           <p className="text-[10px] text-primary bg-accent inline-block px-2 py-0.5 rounded-full mb-2">
-            {activeSpace ? "Live Now" : "Waiting"}
+            {selectedSpace
+              ? selectedSpace.Status === "active"
+                ? "Live Now"
+                : selectedSpace.Status.toUpperCase()
+              : "Waiting"}
           </p>
           <h2 className="text-[17px] text-foreground">
-            {activeSpace?.SpaceName || (loadingSpace ? "행사 정보를 불러오는 중..." : "사용 가능한 Space가 없습니다")}
+            {selectedSpace?.SpaceName || (loadingSpace ? "행사 정보를 불러오는 중..." : "사용 가능한 Space가 없습니다")}
           </h2>
+          {spaces.length > 1 && (
+            <div className="mt-2">
+              <label className="text-[11px] text-muted-foreground">행사 선택</label>
+              <select
+                value={selectedSpaceId ?? ""}
+                onChange={(event) => setSelectedSpaceId(Number(event.target.value))}
+                className="mt-1 w-full h-9 px-3 rounded-xl bg-input-background border border-border text-[12px]"
+              >
+                {spaces.map((space) => (
+                  <option key={space.SpaceID} value={space.SpaceID}>
+                    {space.SpaceName} ({space.Status})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="mt-2.5 flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-muted-foreground">
               <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-[12px]">{formatDateRange()}</span>
+              <span className="text-[12px]">
+                {formatDateRange()} · 기준: active 상태 우선, 최신 업데이트 순
+              </span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 shrink-0" />
               <span className="text-[12px]">
-                {activeSpace?.HostName || activeSpace?.Description || "행사 설명이 없습니다."}
+                {selectedSpace?.HostName || selectedSpace?.Description || "행사 설명이 없습니다."}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-border/50 p-5 space-y-3">
+        <div className="surface-card p-5 space-y-3">
           <div>
             <label className="text-[12px] text-muted-foreground mb-1.5 block">Join Code</label>
             <input
@@ -155,7 +205,7 @@ export function LoginPage() {
           <button
             onClick={handleAnonymousEnter}
             disabled={joining}
-            className="w-full h-12 flex items-center justify-center gap-2.5 bg-primary text-white rounded-xl hover:bg-green-700 active:scale-[0.98] transition disabled:opacity-50"
+            className="w-full h-12 flex items-center justify-center gap-2.5 bg-primary text-white rounded-xl hover:bg-green-700 active:scale-[0.98] transition disabled:opacity-50 shadow-[0_10px_24px_rgba(22,163,74,0.3)]"
           >
             <UserRound className="w-[18px] h-[18px]" />
             <span className="text-[14px]">{joining ? "입장 중..." : "익명으로 참여하기"}</span>

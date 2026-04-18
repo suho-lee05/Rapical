@@ -40,6 +40,56 @@ router.get(
 );
 
 router.post(
+  "/register",
+  asyncHandler(async (req, res) => {
+    if (!ensureDb(res)) return;
+
+    const { email, password, adminName, role = "admin" } = req.body;
+    if (!email || !password || !adminName) {
+      return res.status(400).json({
+        success: false,
+        message: "email, password, adminName is required",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const { data: existing, error: existingError } = await supabase
+      .from("Admins")
+      .select("AdminID")
+      .eq("Email", normalizedEmail)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
+    const payload = {
+      Email: normalizedEmail,
+      Password: password,
+      AdminName: adminName,
+      Role: role,
+      IsActive: true,
+      CreatedAt: new Date().toISOString(),
+      UpdatedAt: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("Admins")
+      .insert(payload)
+      .select("AdminID, Email, AdminName, Role, IsActive, CreatedAt, UpdatedAt")
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ success: true, data });
+  }),
+);
+
+router.post(
   "/login",
   asyncHandler(async (req, res) => {
     if (!ensureDb(res)) return;
@@ -52,11 +102,12 @@ router.post(
       });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
     const { data, error } = await supabase
       .from("Admins")
       .select("AdminID, Email, AdminName, Role, IsActive, Password")
-      .eq("Email", email)
-      .single();
+      .eq("Email", normalizedEmail)
+      .maybeSingle();
 
     if (error) throw error;
 

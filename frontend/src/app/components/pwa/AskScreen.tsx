@@ -98,8 +98,8 @@ export function AskScreen() {
       <Toaster position="top-center" richColors />
       <TopAppBar title="Ask" />
 
-      <div className="max-w-[500px] mx-auto px-4 pt-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-border/50 p-4">
+      <div className="app-screen pt-4">
+        <div className="surface-card p-4">
           <textarea
             placeholder="질문을 입력하세요..."
             value={question}
@@ -117,7 +117,7 @@ export function AskScreen() {
                 <button
                   key={example}
                   onClick={() => setQuestion(example)}
-                  className="px-3 py-1.5 rounded-xl text-[12px] bg-white border border-border/60 text-foreground"
+                  className="px-3 py-1.5 rounded-xl text-[12px] bg-white border border-border/70 text-foreground"
                 >
                   {example}
                 </button>
@@ -136,7 +136,7 @@ export function AskScreen() {
               className={`px-3 py-1.5 rounded-xl text-[12px] transition ${
                 selectedCategory === category
                   ? "bg-primary text-white"
-                  : "bg-white border border-border text-muted-foreground"
+                  : "bg-white border border-border/80 text-muted-foreground"
               }`}
             >
               {category}
@@ -153,7 +153,7 @@ export function AskScreen() {
               {suggestions.map((faq) => (
                 <div
                   key={faq.FeedPostID}
-                  className="bg-white rounded-2xl border border-border/50 p-3.5 shadow-sm"
+                  className="surface-card p-3.5"
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] text-primary bg-accent px-1.5 py-0.5 rounded-lg">
@@ -185,8 +185,8 @@ export function AskScreen() {
         )}
       </div>
 
-      <div className="fixed bottom-14 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-border z-30 px-4 py-3">
-        <div className="max-w-[500px] mx-auto flex gap-2">
+      <div className="fixed bottom-14 left-0 right-0 bg-white/92 backdrop-blur-md border-t border-border/80 z-30 px-4 py-3">
+        <div className="max-w-[540px] mx-auto flex gap-2">
           <button
             onClick={handleSend}
             disabled={!question.trim() || sending}

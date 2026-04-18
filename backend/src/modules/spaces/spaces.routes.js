@@ -10,7 +10,7 @@ router.get(
   asyncHandler(async (req, res) => {
     if (!ensureDb(res)) return;
 
-    const { status } = req.query;
+    const { status, createdBy } = req.query;
 
     let query = supabase
       .from("Spaces")
@@ -18,6 +18,7 @@ router.get(
       .order("CreatedAt", { ascending: false });
 
     if (status) query = query.eq("Status", status);
+    if (createdBy) query = query.eq("CreatedBy", createdBy);
 
     const { data, error } = await query;
     if (error) throw error;

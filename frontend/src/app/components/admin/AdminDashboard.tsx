@@ -4,7 +4,7 @@ import { toast, Toaster } from "sonner";
 import { Reply } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { api, type Question, type QuestionMessage } from "../../lib/api";
-import { getAdminSession, getSelectedSpaceId } from "../../lib/admin-session";
+import { getAdminSession, useSelectedSpaceId } from "../../lib/admin-session";
 import {
   isRealtimeEnabled,
   subscribeToQuestionMessages,
@@ -47,7 +47,7 @@ export function AdminDashboard() {
   const [reply, setReply] = useState("");
   const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [sendingReply, setSendingReply] = useState(false);
-  const selectedSpaceId = getSelectedSpaceId();
+  const selectedSpaceId = useSelectedSpaceId();
 
   const selectedQuestion = useMemo(
     () => questions.find((question) => question.QuestionID === selectedQuestionId) || null,

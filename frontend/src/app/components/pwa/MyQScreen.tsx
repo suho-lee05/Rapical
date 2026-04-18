@@ -122,8 +122,8 @@ export function MyQScreen() {
 
     return (
       <div className="min-h-screen bg-background pb-16 flex flex-col">
-        <header className="sticky top-0 bg-white/95 backdrop-blur-sm z-40 border-b border-border">
-          <div className="flex items-center gap-2 h-12 px-4 max-w-[500px] mx-auto">
+        <header className="surface-header">
+          <div className="app-screen flex items-center gap-2 h-[52px]">
             <button onClick={() => setSelectedQuestionId(null)} className="p-1 -ml-1">
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -134,7 +134,7 @@ export function MyQScreen() {
           </div>
         </header>
 
-        <div className="flex-1 max-w-[500px] w-full mx-auto px-4 pt-5 pb-4">
+        <div className="flex-1 app-screen pt-5 pb-4">
           {selectedThread.question.PublishedFaqPostID && (
             <button
               onClick={() => navigate(`/pwa/feed/${selectedThread.question.PublishedFaqPostID}`)}
@@ -160,7 +160,7 @@ export function MyQScreen() {
 
           {selectedThread.messages.length === 0 ? (
             <div className="flex justify-start">
-              <div className="max-w-[80%] bg-white rounded-2xl rounded-bl-md px-4 py-3 border border-border/50 text-[13px] text-muted-foreground">
+              <div className="max-w-[80%] bg-white rounded-2xl rounded-bl-md px-4 py-3 border border-border/70 text-[13px] text-muted-foreground">
                 Waiting for reply...
               </div>
             </div>
@@ -177,7 +177,7 @@ export function MyQScreen() {
                     className={`px-4 py-3 shadow-sm text-[14px] leading-relaxed ${
                       message.SenderType === "participant"
                         ? "bg-primary text-white rounded-2xl rounded-br-md"
-                        : "bg-white text-foreground rounded-2xl rounded-bl-md border border-border/50"
+                        : "bg-white text-foreground rounded-2xl rounded-bl-md border border-border/70"
                     }`}
                   >
                     {message.MessageText}
@@ -206,7 +206,7 @@ export function MyQScreen() {
     <div className="min-h-screen bg-background pb-16">
       <TopAppBar title="My Q" />
 
-      <div className="max-w-[500px] mx-auto">
+      <div className="max-w-[540px] mx-auto">
         {loading ? (
           <div className="px-4 pt-6 text-[13px] text-muted-foreground">불러오는 중...</div>
         ) : threads.length === 0 ? (

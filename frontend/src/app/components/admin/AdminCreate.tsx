@@ -5,8 +5,8 @@ import { toast, Toaster } from "sonner";
 import { api } from "../../lib/api";
 import {
   getAdminSession,
-  getSelectedSpaceId,
   setSelectedSpaceId,
+  useSelectedSpaceId,
 } from "../../lib/admin-session";
 
 export function AdminCreate() {
@@ -14,7 +14,7 @@ export function AdminCreate() {
   const [searchParams] = useSearchParams();
   const postId = Number(searchParams.get("postId") || 0);
   const admin = getAdminSession();
-  const selectedSpaceId = getSelectedSpaceId();
+  const selectedSpaceId = useSelectedSpaceId();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");

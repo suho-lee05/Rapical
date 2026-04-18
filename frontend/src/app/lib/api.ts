@@ -108,20 +108,54 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  registerAdmin(body: {
+    email: string;
+    password: string;
+    adminName: string;
+    role?: "owner" | "admin" | "operator" | "viewer";
+  }) {
+    return request<AdminSession>("/admins/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
   loginAdmin(email: string, password: string) {
     return request<AdminSession>("/admins/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
   },
-  getSpaces(params: { status?: string } = {}) {
+  getAdmins() {
+    return request<AdminSession[]>("/admins");
+  },
+  getSpaces(params: { status?: string; createdBy?: number } = {}) {
     const search = new URLSearchParams();
     if (params.status) search.set("status", params.status);
+    if (params.createdBy) search.set("createdBy", String(params.createdBy));
     const query = search.toString();
     return request<Space[]>(`/spaces${query ? `?${query}` : ""}`);
   },
   getSpaceByJoinCode(joinCode: string) {
     return request<Space>(`/spaces/join-code/${encodeURIComponent(joinCode)}`);
+  },
+  createSpace(body: {
+    SpaceName: string;
+    Description?: string | null;
+    HostName?: string | null;
+    JoinCode: string;
+    QrToken: string;
+    CreatedBy: number;
+  }) {
+    return request<Space>("/spaces", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  updateSpace(spaceId: number, body: Partial<Space>) {
+    return request<Space>(`/spaces/${spaceId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
   },
   joinParticipant(body: {
     joinCode: string;
@@ -131,6 +165,19 @@ export const api = {
   }) {
     return request<Participant>("/participants/join", {
       method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  getParticipants(params: { spaceId?: number; status?: string } = {}) {
+    const search = new URLSearchParams();
+    if (params.spaceId) search.set("spaceId", String(params.spaceId));
+    if (params.status) search.set("status", params.status);
+    const query = search.toString();
+    return request<Participant[]>(`/participants${query ? `?${query}` : ""}`);
+  },
+  updateParticipant(participantId: number, body: Partial<Participant>) {
+    return request<Participant>(`/participants/${participantId}`, {
+      method: "PATCH",
       body: JSON.stringify(body),
     });
   },

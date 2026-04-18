@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { StatusBadge } from "../shared/StatusBadge";
 import { api, type Question, type QuestionMessage } from "../../lib/api";
-import { getAdminSession, getSelectedSpaceId } from "../../lib/admin-session";
+import { getAdminSession, useSelectedSpaceId } from "../../lib/admin-session";
 import {
   isRealtimeEnabled,
   subscribeToQuestionMessages,
@@ -21,7 +21,7 @@ export function AdminTicketDetail() {
   const params = useParams();
   const questionId = Number(params.id || 0);
   const admin = getAdminSession();
-  const spaceId = getSelectedSpaceId();
+  const spaceId = useSelectedSpaceId();
 
   const [question, setQuestion] = useState<Question | null>(null);
   const [messages, setMessages] = useState<QuestionMessage[]>([]);

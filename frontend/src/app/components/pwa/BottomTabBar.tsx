@@ -12,16 +12,18 @@ export function BottomTabBar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50">
-      <div className="flex items-center justify-around h-14 max-w-[500px] mx-auto">
+    <nav className="surface-bottom-nav">
+      <div className="flex items-center justify-around h-[60px] max-w-[540px] mx-auto px-2">
         {tabs.map((tab) => {
           const isActive = location.pathname.startsWith(tab.path);
           return (
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-0.5 px-4 py-1.5 transition-colors ${
-                isActive ? "text-primary" : "text-muted-foreground"
+              className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition ${
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:bg-muted/70"
               }`}
             >
               <tab.icon className="w-5 h-5" />

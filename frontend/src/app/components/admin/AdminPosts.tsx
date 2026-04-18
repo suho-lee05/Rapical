@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Plus, Pin, Search } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { api, type FeedPost } from "../../lib/api";
-import { getSelectedSpaceId } from "../../lib/admin-session";
+import { useSelectedSpaceId } from "../../lib/admin-session";
 
 type Filter = "All" | "Published" | "Draft" | "Pinned";
 
@@ -13,7 +13,7 @@ export function AdminPosts() {
   const [filter, setFilter] = useState<Filter>("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const selectedSpaceId = getSelectedSpaceId();
+  const selectedSpaceId = useSelectedSpaceId();
 
   async function loadPosts() {
     if (!selectedSpaceId) {
