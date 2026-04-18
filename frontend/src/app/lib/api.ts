@@ -76,9 +76,14 @@ type ApiResponse<T> = {
   message?: string;
 };
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-  "http://localhost:4000/api";
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const isDev = Boolean(import.meta.env.DEV);
+
+const API_BASE_URL = envApiBaseUrl
+  ? envApiBaseUrl
+  : isDev
+    ? "http://localhost:4000/api"
+    : "https://backend-production-b087.up.railway.app/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
