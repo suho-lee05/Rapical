@@ -16,6 +16,15 @@ function mapToBadgeStatus(status: Question["Status"]) {
   return "closed";
 }
 
+function buildFaqTitle(question: Question) {
+  const fallback = question.BodyText.trim().slice(0, 60);
+  return question.Title?.trim() || fallback || `Q${question.QuestionID} FAQ`;
+}
+
+function buildFaqBody(question: Question, answerText: string) {
+  return `Q. ${question.BodyText.trim()}\n\nA. ${answerText.trim()}`;
+}
+
 export function AdminTicketDetail() {
   const navigate = useNavigate();
   const params = useParams();
@@ -108,8 +117,8 @@ export function AdminTicketDetail() {
           SpaceID: spaceId,
           AuthorAdminID: admin.AdminID,
           PostType: "faq",
-          Title: question.Title || `Q${question.QuestionID} FAQ`,
-          BodyText: sendingText,
+          Title: buildFaqTitle(question),
+          BodyText: buildFaqBody(question, sendingText),
           IsPublished: true,
           PublishedAt: new Date().toISOString(),
         });
@@ -159,7 +168,7 @@ export function AdminTicketDetail() {
           <div className="mb-3">
             <StatusBadge status={mapToBadgeStatus(question.Status)} />
             <h2 className="text-[18px] text-foreground mt-2">
-              {question.Title || "Untitled question"}
+              {question.Title || question.BodyText.slice(0, 60)}
             </h2>
             <p className="text-[14px] text-foreground/80 mt-2 whitespace-pre-wrap">
               {question.BodyText}

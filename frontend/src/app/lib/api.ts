@@ -11,6 +11,8 @@ export type Space = {
   SpaceName: string;
   Description: string | null;
   HostName: string | null;
+  Latitude: number | null;
+  Longitude: number | null;
   Status: "draft" | "active" | "ended" | "archived";
   JoinCode: string;
   QrToken: string;
@@ -147,6 +149,8 @@ export const api = {
     SpaceName: string;
     Description?: string | null;
     HostName?: string | null;
+    Latitude?: number | null;
+    Longitude?: number | null;
     JoinCode: string;
     QrToken: string;
     CreatedBy: number;
@@ -160,6 +164,11 @@ export const api = {
     return request<Space>(`/spaces/${spaceId}`, {
       method: "PATCH",
       body: JSON.stringify(body),
+    });
+  },
+  deleteSpace(spaceId: number) {
+    return request<Space>(`/spaces/${spaceId}`, {
+      method: "DELETE",
     });
   },
   joinParticipant(body: {

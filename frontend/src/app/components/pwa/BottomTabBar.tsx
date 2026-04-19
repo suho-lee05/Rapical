@@ -1,7 +1,8 @@
 import { useLocation, useNavigate } from "react-router";
-import { Megaphone, MessageCircleQuestion, Inbox } from "lucide-react";
+import { Megaphone, MessageCircleQuestion, Inbox, House } from "lucide-react";
 
 const tabs = [
+  { path: "/", label: "Main", icon: House },
   { path: "/pwa/feed", label: "Feed", icon: Megaphone },
   { path: "/pwa/ask", label: "Ask", icon: MessageCircleQuestion },
   { path: "/pwa/my-q", label: "My Q", icon: Inbox },
@@ -15,7 +16,10 @@ export function BottomTabBar() {
     <nav className="surface-bottom-nav">
       <div className="flex items-center justify-around h-[60px] max-w-[540px] mx-auto px-2">
         {tabs.map((tab) => {
-          const isActive = location.pathname.startsWith(tab.path);
+          const isActive =
+            tab.path === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(tab.path);
           return (
             <button
               key={tab.path}

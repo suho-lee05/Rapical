@@ -57,10 +57,26 @@ router.post(
       });
     }
 
+    const { data: existingQuestion, error: existingQuestionError } = await supabase
+      .from("Questions")
+      .select("QuestionID")
+      .eq("SpaceID", SpaceID)
+      .eq("ParticipantID", ParticipantID)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingQuestionError) throw existingQuestionError;
+    if (existingQuestion) {
+      return res.status(409).json({
+        success: false,
+        message: "이 이벤트에서는 질문을 1회만 보낼 수 있습니다.",
+      });
+    }
+
     const payload = {
       SpaceID,
       ParticipantID,
-      Title: Title || null,
+      Title: Title?.trim() ? Title.trim() : null,
       BodyText,
       IsPrivate,
       CreatedAt: new Date().toISOString(),

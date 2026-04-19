@@ -13,6 +13,17 @@ import {
 
 type Filter = "all" | "pending" | "answered" | "closed";
 
+type RawQuestion = Partial<Question> & {
+  questionId?: number;
+  spaceId?: number;
+  participantId?: number;
+  title?: string | null;
+  bodyText?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 function mapToBadgeStatus(status: Question["Status"]) {
   if (status === "pending") return "new";
   if (status === "answered") return "answered";
@@ -20,10 +31,11 @@ function mapToBadgeStatus(status: Question["Status"]) {
 }
 
 function matchFilter(status: Question["Status"], filter: Filter) {
+  const normalized = String(status || "pending").toLowerCase();
   if (filter === "all") return true;
-  if (filter === "pending") return status === "pending";
-  if (filter === "answered") return status === "answered";
-  return status === "closed" || status === "rejected";
+  if (filter === "pending") return normalized === "pending";
+  if (filter === "answered") return normalized === "answered";
+  return normalized === "closed" || normalized === "rejected";
 }
 
 function toTimeLabel(date: string) {
@@ -36,9 +48,52 @@ function toTimeLabel(date: string) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+function buildFaqTitle(question: Question) {
+  const fallback = question.BodyText.trim().slice(0, 60);
+  return question.Title?.trim() || fallback || `Q${question.QuestionID} FAQ`;
+}
+
+function buildFaqBody(question: Question, answerText: string) {
+  return `Q. ${question.BodyText.trim()}\n\nA. ${answerText.trim()}`;
+}
+
+function normalizeQuestion(entry: RawQuestion): Question {
+  const statusRaw = String(entry.Status ?? entry.status ?? "pending").toLowerCase();
+  const status: Question["Status"] =
+    statusRaw === "answered" ||
+    statusRaw === "rejected" ||
+    statusRaw === "closed" ||
+    statusRaw === "pending"
+      ? (statusRaw as Question["Status"])
+      : "pending";
+
+  const createdAt = entry.CreatedAt ?? entry.createdAt ?? new Date().toISOString();
+  const updatedAt = entry.UpdatedAt ?? entry.updatedAt ?? createdAt;
+
+  return {
+    QuestionID: Number(entry.QuestionID ?? entry.questionId ?? 0),
+    SpaceID: Number(entry.SpaceID ?? entry.spaceId ?? 0),
+    ParticipantID: Number(entry.ParticipantID ?? entry.participantId ?? 0),
+    Title: (entry.Title ?? entry.title ?? null) as string | null,
+    BodyText: String(entry.BodyText ?? entry.bodyText ?? ""),
+    Status: status,
+    IsPrivate: Boolean(entry.IsPrivate ?? true),
+    PublishedFaqPostID:
+      entry.PublishedFaqPostID === null || entry.PublishedFaqPostID === undefined
+        ? null
+        : Number(entry.PublishedFaqPostID),
+    AssignedAdminID:
+      entry.AssignedAdminID === null || entry.AssignedAdminID === undefined
+        ? null
+        : Number(entry.AssignedAdminID),
+    CreatedAt: createdAt,
+    UpdatedAt: updatedAt,
+  };
+}
+
 export function AdminDashboard() {
   const navigate = useNavigate();
-  const admin = getAdminSession();
+  const admin = useMemo(() => getAdminSession(), []);
   const [filter, setFilter] = useState<Filter>("all");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
@@ -68,11 +123,15 @@ export function AdminDashboard() {
     if (!silent) setLoading(true);
     try {
       const data = await api.getQuestions({ spaceId: selectedSpaceId });
-      setQuestions(data);
-      if (!selectedQuestionId && data.length > 0) {
-        setSelectedQuestionId(data[0].QuestionID);
-      } else if (selectedQuestionId && !data.some((q) => q.QuestionID === selectedQuestionId)) {
-        setSelectedQuestionId(data[0]?.QuestionID || null);
+      const normalized = data.map((item) => normalizeQuestion(item as RawQuestion));
+      setQuestions(normalized);
+      if (!selectedQuestionId && normalized.length > 0) {
+        setSelectedQuestionId(normalized[0].QuestionID);
+      } else if (
+        selectedQuestionId &&
+        !normalized.some((q) => q.QuestionID === selectedQuestionId)
+      ) {
+        setSelectedQuestionId(normalized[0]?.QuestionID || null);
       }
     } catch (error) {
       if (!silent) {
@@ -102,7 +161,7 @@ export function AdminDashboard() {
       return;
     }
     loadQuestions(false);
-  }, [admin, navigate, selectedSpaceId]);
+  }, [navigate, selectedSpaceId]);
 
   useEffect(() => {
     if (!selectedQuestionId) return;
@@ -212,9 +271,8 @@ export function AdminDashboard() {
           SpaceID: selectedSpaceId,
           AuthorAdminID: admin.AdminID,
           PostType: "faq",
-          Title:
-            selectedQuestion.Title || `Q${selectedQuestion.QuestionID} FAQ`,
-          BodyText: sendingText,
+          Title: buildFaqTitle(selectedQuestion),
+          BodyText: buildFaqBody(selectedQuestion, sendingText),
           BodyJson: null,
           IsPublished: true,
           PublishedAt: new Date().toISOString(),
@@ -337,7 +395,7 @@ export function AdminDashboard() {
                   </button>
                 </div>
                 <h3 className="text-[18px] text-foreground mt-3">
-                  {selectedQuestion.Title || "Untitled question"}
+                  {selectedQuestion.Title || selectedQuestion.BodyText.slice(0, 60)}
                 </h3>
                 <p className="text-[14px] text-muted-foreground mt-2 whitespace-pre-wrap">
                   {selectedQuestion.BodyText}

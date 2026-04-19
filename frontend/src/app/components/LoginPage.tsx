@@ -12,6 +12,47 @@ function formatDateRange() {
   return "Now accepting attendees";
 }
 
+function distanceInKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+) {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const x =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLng / 2) * Math.sin(dLng / 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  return earthRadiusKm * c;
+}
+
+function getCurrentPosition() {
+  return new Promise<{ lat: number; lng: number } | null>((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      () => resolve(null),
+      {
+        enableHighAccuracy: false,
+        timeout: 2500,
+        maximumAge: 1000 * 60 * 10,
+      },
+    );
+  });
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
@@ -29,7 +70,10 @@ export function LoginPage() {
   useEffect(() => {
     async function loadSpace() {
       try {
-        const allSpaces = await api.getSpaces();
+        const [allSpaces, currentPosition] = await Promise.all([
+          api.getSpaces(),
+          getCurrentPosition(),
+        ]);
         setSpaces(allSpaces);
 
         const activeSpaces = allSpaces
@@ -46,7 +90,31 @@ export function LoginPage() {
               new Date(b.UpdatedAt).getTime() - new Date(a.UpdatedAt).getTime(),
           );
 
-        const primarySpace = activeSpaces[0] || fallbackSpaces[0] || null;
+        const activeSpacesWithGeo =
+          currentPosition === null
+            ? []
+            : activeSpaces
+                .filter(
+                  (space) =>
+                    typeof space.Latitude === "number" &&
+                    Number.isFinite(space.Latitude) &&
+                    typeof space.Longitude === "number" &&
+                    Number.isFinite(space.Longitude),
+                )
+                .sort((a, b) => {
+                  const distanceA = distanceInKm(currentPosition, {
+                    lat: a.Latitude as number,
+                    lng: a.Longitude as number,
+                  });
+                  const distanceB = distanceInKm(currentPosition, {
+                    lat: b.Latitude as number,
+                    lng: b.Longitude as number,
+                  });
+                  return distanceA - distanceB;
+                });
+
+        const primarySpace =
+          activeSpacesWithGeo[0] || activeSpaces[0] || fallbackSpaces[0] || null;
         setSelectedSpaceId(primarySpace?.SpaceID || null);
         setJoinCode(primarySpace?.JoinCode || "");
       } catch (error) {
@@ -165,7 +233,7 @@ export function LoginPage() {
             <div className="flex items-center gap-2 text-muted-foreground">
               <CalendarDays className="w-3.5 h-3.5 shrink-0" />
               <span className="text-[12px]">
-                {formatDateRange()} · 기준: active 상태 우선, 최신 업데이트 순
+                {formatDateRange()} · 기준: GPS 근접 active 우선, 이후 최신 업데이트 순
               </span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">

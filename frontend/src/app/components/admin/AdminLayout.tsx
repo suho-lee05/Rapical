@@ -94,20 +94,20 @@ export function AdminLayout() {
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Desktop Sidebar — hidden on mobile */}
-      <aside className="hidden lg:flex w-60 bg-white/90 backdrop-blur-md border-r border-border/80 flex-col shrink-0">
-        <div className="h-[60px] flex items-center px-5 border-b border-border/80">
+      <aside className="hidden lg:flex w-64 bg-white/90 backdrop-blur-md border-r border-border/80 flex-col shrink-0">
+        <div className="h-[68px] flex items-center px-5 border-b border-border/80">
           <h1
-            className="text-[20px] text-primary tracking-tight cursor-pointer"
+            className="text-[24px] font-bold text-primary tracking-tight cursor-pointer"
             onClick={() => navigate("/admin/dashboard")}
           >
             Rapicial
           </h1>
-          <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-lg">Admin</span>
+          <span className="ml-2 text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-lg">Admin</span>
         </div>
 
         {/* Event selector */}
         <div className="px-3 py-3 border-b border-border/80">
-          <div className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-muted/70 border border-border/70 text-[13px]">
+          <div className="w-full flex items-center justify-between gap-2 px-3.5 py-3 rounded-xl bg-muted/70 border border-border/70 text-[15px] font-semibold">
             <select
               value={selectedSpaceId ?? ""}
               onChange={(e) => {
@@ -118,7 +118,7 @@ export function AdminLayout() {
                 }
                 setSelectedSpaceId(value);
               }}
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-transparent focus:outline-none font-semibold"
             >
               {spaces.length === 0 && <option value="">Space 없음</option>}
               {spaces.map((space) => (
@@ -127,7 +127,7 @@ export function AdminLayout() {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
           </div>
         </div>
 
@@ -165,13 +165,31 @@ export function AdminLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile top bar */}
         <header className="surface-header lg:hidden">
-          <div className="flex items-center justify-between h-12 px-4">
-            <h1 className="text-[16px] text-primary tracking-tight">Rapicial</h1>
+          <div className="flex items-center justify-between h-14 px-4">
+            <h1 className="text-[21px] font-bold text-primary tracking-tight">Rapicial</h1>
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-muted/70 border border-border/70 text-[12px] text-foreground">
-                <span>{selectedSpace?.SpaceName || "No Space"}</span>
-                <ChevronDown className="w-3 h-3 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-muted/70 border border-border/70 text-[14px] font-semibold text-foreground">
+                <select
+                  value={selectedSpaceId ?? ""}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (!Number.isFinite(value) || !value) {
+                      clearSelectedSpaceId();
+                      return;
+                    }
+                    setSelectedSpaceId(value);
+                  }}
+                  className="bg-transparent focus:outline-none max-w-[180px] font-semibold"
+                >
+                  {spaces.length === 0 && <option value="">No Space</option>}
+                  {spaces.map((space) => (
+                    <option key={space.SpaceID} value={space.SpaceID}>
+                      {space.SpaceName}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              </div>
             </div>
           </div>
         </header>

@@ -19,20 +19,31 @@ const exampleQuestions = [
 export function AskScreen() {
   const navigate = useNavigate();
   const participantSession = getParticipantSession();
+  const [title, setTitle] = useState("");
   const [question, setQuestion] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [faqPosts, setFaqPosts] = useState<FeedPost[]>([]);
+  const [alreadyAsked, setAlreadyAsked] = useState(false);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     async function loadFaqs() {
       if (!participantSession?.SpaceID) return;
-      const data = await api.getFeedPosts({
-        spaceId: participantSession.SpaceID,
-        postType: "faq",
-        isPublished: true,
-      });
-      setFaqPosts(data);
+      const [faqData, myQuestions] = await Promise.all([
+        api.getFeedPosts({
+          spaceId: participantSession.SpaceID,
+          postType: "faq",
+          isPublished: true,
+        }),
+        participantSession.ParticipantID
+          ? api.getQuestions({
+              spaceId: participantSession.SpaceID,
+              participantId: participantSession.ParticipantID,
+            })
+          : Promise.resolve([]),
+      ]);
+      setFaqPosts(faqData);
+      setAlreadyAsked(myQuestions.length > 0);
     }
 
     loadFaqs();
@@ -58,13 +69,23 @@ export function AskScreen() {
       toast.error("질문을 입력해 주세요.");
       return;
     }
+    if (!title.trim()) {
+      toast.error("질문 제목을 입력해 주세요.");
+      return;
+    }
+    if (alreadyAsked) {
+      toast.error("이 이벤트에서는 질문을 1회만 보낼 수 있습니다.");
+      return;
+    }
 
     try {
       setSending(true);
       await api.createQuestion({
         SpaceID: participantSession.SpaceID,
         ParticipantID: participantSession.ParticipantID,
-        Title: selectedCategory ? `[${selectedCategory}]` : null,
+        Title: selectedCategory
+          ? `[${selectedCategory}] ${title.trim()}`
+          : title.trim(),
         BodyText: question.trim(),
         IsPrivate: true,
       });
@@ -100,6 +121,12 @@ export function AskScreen() {
 
       <div className="app-screen pt-4">
         <div className="surface-card p-4">
+          <input
+            placeholder="질문 제목"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="w-full h-11 px-3.5 rounded-xl bg-input-background border border-border text-[14px] mb-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
           <textarea
             placeholder="질문을 입력하세요..."
             value={question}
@@ -189,11 +216,13 @@ export function AskScreen() {
         <div className="max-w-[540px] mx-auto flex gap-2">
           <button
             onClick={handleSend}
-            disabled={!question.trim() || sending}
+            disabled={!question.trim() || !title.trim() || sending || alreadyAsked}
             className="flex-1 h-11 flex items-center justify-center gap-2 bg-primary text-white rounded-xl disabled:opacity-40"
           >
             <Send className="w-4 h-4" />
-            <span className="text-[14px]">{sending ? "Sending..." : "Send question"}</span>
+            <span className="text-[14px]">
+              {alreadyAsked ? "질문 1회 사용 완료" : sending ? "Sending..." : "Send question"}
+            </span>
           </button>
           <button
             onClick={() => navigate("/pwa/feed")}
