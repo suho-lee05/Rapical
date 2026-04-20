@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast, Toaster } from "sonner";
-import { Reply, Trash2, Flame } from "lucide-react";
+import { Reply, Trash2, Flame, RotateCcw } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { api, type Question, type QuestionMessage } from "../../lib/api";
 import { getAdminSession, useSelectedSpaceId } from "../../lib/admin-session";
@@ -104,6 +104,7 @@ export function AdminDashboard() {
   const [sendingReply, setSendingReply] = useState(false);
   const [deletingQuestion, setDeletingQuestion] = useState(false);
   const [resettingDemo, setResettingDemo] = useState(false);
+  const [restoringPosts, setRestoringPosts] = useState(false);
   const selectedSpaceId = useSelectedSpaceId();
 
   const selectedQuestion = useMemo(
@@ -350,6 +351,23 @@ export function AdminDashboard() {
     }
   };
 
+  const handleRestorePosts = async () => {
+    const confirmed = window.confirm(
+      "포스트/핀 상태만 시연 기본값으로 복구할까요?\n문의/참여자 데이터는 유지됩니다.",
+    );
+    if (!confirmed) return;
+    try {
+      setRestoringPosts(true);
+      await api.restoreDemoPosts();
+      toast.success("포스트/핀 상태 복구 완료");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "포스트 복구 실패";
+      toast.error(message);
+    } finally {
+      setRestoringPosts(false);
+    }
+  };
+
   return (
     <div className="p-4 lg:p-6">
       <Toaster position="top-center" richColors />
@@ -370,6 +388,14 @@ export function AdminDashboard() {
               >
                 <Flame className="w-3.5 h-3.5" />
                 {resettingDemo ? "Reset 중..." : "Reset"}
+              </button>
+              <button
+                onClick={handleRestorePosts}
+                disabled={restoringPosts}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-[12px] disabled:opacity-50"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {restoringPosts ? "Post 복구 중..." : "Post 복구"}
               </button>
             </div>
             {!selectedSpaceId && (

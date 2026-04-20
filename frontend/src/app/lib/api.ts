@@ -292,5 +292,14 @@ export const api = {
       body: JSON.stringify({}),
     });
   },
+  restoreDemoPosts() {
+    return request<{ airforceSpaceId: number; copsSpaceId: number }>(
+      "/admins/demo-restore-posts",
+      {
+        method: "POST",
+        body: JSON.stringify({}),
+      },
+    );
+  },
 };
 
