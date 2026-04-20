@@ -212,6 +212,11 @@ export const api = {
       body: JSON.stringify(body),
     });
   },
+  deleteQuestion(questionId: number) {
+    return request<Question>(`/questions/${questionId}`, {
+      method: "DELETE",
+    });
+  },
   getQuestionMessages(questionId: number) {
     return request<QuestionMessage[]>(`/question-messages?questionId=${questionId}`);
   },
@@ -279,6 +284,12 @@ export const api = {
     return request<Question>("/questions", {
       method: "POST",
       body: JSON.stringify(body),
+    });
+  },
+  resetDemoData() {
+    return request<{ airforceSpaceId: number; copsSpaceId: number }>("/admins/demo-reset", {
+      method: "POST",
+      body: JSON.stringify({}),
     });
   },
 };

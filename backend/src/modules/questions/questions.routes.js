@@ -114,4 +114,36 @@ router.patch(
   }),
 );
 
+router.delete(
+  "/:questionId",
+  asyncHandler(async (req, res) => {
+    if (!ensureDb(res)) return;
+
+    const { questionId } = req.params;
+
+    const { error: deleteMessagesError } = await supabase
+      .from("QuestionMessages")
+      .delete()
+      .eq("QuestionID", questionId);
+    if (deleteMessagesError) throw deleteMessagesError;
+
+    const { data, error } = await supabase
+      .from("Questions")
+      .delete()
+      .eq("QuestionID", questionId)
+      .select("*")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "삭제할 문의를 찾을 수 없습니다.",
+      });
+    }
+
+    res.json({ success: true, data, message: "문의가 삭제되었습니다." });
+  }),
+);
+
 module.exports = router;

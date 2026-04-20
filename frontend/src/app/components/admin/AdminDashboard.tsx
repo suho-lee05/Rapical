@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast, Toaster } from "sonner";
-import { Reply } from "lucide-react";
+import { Reply, Trash2, Flame } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { api, type Question, type QuestionMessage } from "../../lib/api";
 import { getAdminSession, useSelectedSpaceId } from "../../lib/admin-session";
@@ -102,6 +102,8 @@ export function AdminDashboard() {
   const [reply, setReply] = useState("");
   const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [sendingReply, setSendingReply] = useState(false);
+  const [deletingQuestion, setDeletingQuestion] = useState(false);
+  const [resettingDemo, setResettingDemo] = useState(false);
   const selectedSpaceId = useSelectedSpaceId();
 
   const selectedQuestion = useMemo(
@@ -306,16 +308,70 @@ export function AdminDashboard() {
     }
   };
 
+  const handleDeleteQuestion = async () => {
+    if (!selectedQuestion) return;
+    const confirmed = window.confirm("이 문의를 삭제할까요? 대화 메시지도 함께 삭제됩니다.");
+    if (!confirmed) return;
+    try {
+      setDeletingQuestion(true);
+      const targetId = selectedQuestion.QuestionID;
+      const nextIdCandidate =
+        questions.find((item) => item.QuestionID !== targetId)?.QuestionID || null;
+      await api.deleteQuestion(targetId);
+      setQuestions((prev) => prev.filter((item) => item.QuestionID !== targetId));
+      setMessages([]);
+      setSelectedQuestionId((prev) => (prev === targetId ? nextIdCandidate : prev));
+      toast.success("문의를 삭제했습니다.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "문의 삭제 실패";
+      toast.error(message);
+    } finally {
+      setDeletingQuestion(false);
+    }
+  };
+
+  const handleDemoReset = async () => {
+    const confirmed = window.confirm(
+      "시연용 Reset을 실행할까요?\n모든 질문/답변/참여자/게시글이 삭제되고 시연 기본 데이터로 복구됩니다.",
+    );
+    if (!confirmed) return;
+    try {
+      setResettingDemo(true);
+      await api.resetDemoData();
+      setMessages([]);
+      setSelectedQuestionId(null);
+      await loadQuestions(false);
+      toast.success("시연 데이터 초기화 완료");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "시연 초기화 실패";
+      toast.error(message);
+    } finally {
+      setResettingDemo(false);
+    }
+  };
+
   return (
     <div className="p-4 lg:p-6">
       <Toaster position="top-center" richColors />
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 h-[calc(100vh-120px)]">
         <section className="bg-white border border-border/50 rounded-2xl flex flex-col min-h-0">
           <div className="p-4 border-b border-border/50">
-            <h2 className="text-[20px] text-foreground">Inbox</h2>
-            <p className="text-[12px] text-muted-foreground mt-1">
-              총 {questions.length}개 문의
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h2 className="text-[20px] text-foreground">Inbox</h2>
+                <p className="text-[12px] text-muted-foreground mt-1">
+                  총 {questions.length}개 문의
+                </p>
+              </div>
+              <button
+                onClick={handleDemoReset}
+                disabled={resettingDemo}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-700 text-[12px] disabled:opacity-50"
+              >
+                <Flame className="w-3.5 h-3.5" />
+                {resettingDemo ? "Reset 중..." : "Reset"}
+              </button>
+            </div>
             {!selectedSpaceId && (
               <p className="text-[12px] text-blue-700 mt-2">
                 선택된 Space가 없습니다. 상단에서 Space를 먼저 선택해 주세요.
@@ -392,6 +448,14 @@ export function AdminDashboard() {
                     className="text-[11px] px-2 py-1 bg-gray-100 text-gray-600 rounded-lg"
                   >
                     closed
+                  </button>
+                  <button
+                    onClick={handleDeleteQuestion}
+                    disabled={deletingQuestion}
+                    className="ml-auto inline-flex items-center gap-1 text-[11px] px-2 py-1 bg-red-50 text-red-700 rounded-lg disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {deletingQuestion ? "deleting..." : "delete"}
                   </button>
                 </div>
                 <h3 className="text-[18px] text-foreground mt-3">
