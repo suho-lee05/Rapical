@@ -369,13 +369,124 @@ router.post(
       .insert(noticePayloads);
     if (insertNoticeError) throw insertNoticeError;
 
+    const demoQnaSeed = [
+      {
+        nickname: "데모참가자1",
+        title: "제출 마감 시간",
+        body:
+          "최종 제출은 4월 22일 낮 12시 정각 기준인가요? 제출 버튼 기준으로 인정되는지 궁금합니다.",
+        answer:
+          "네, 4월 22일(수) 12:00까지 제출 완료된 건만 인정됩니다. 업로드 지연을 고려해 최소 10분 전 제출을 권장드립니다.",
+      },
+      {
+        nickname: "데모참가자2",
+        title: "팀원 변경 가능 여부",
+        body:
+          "접수 후 팀원 1명 교체가 필요한데, 마감 전까지 변경 신청이 가능한가요?",
+        answer:
+          "마감 전에는 팀원 변경 신청이 가능합니다. 운영진에게 변경 사유와 신규 팀원 정보를 함께 전달해 주세요.",
+      },
+      {
+        nickname: "데모참가자3",
+        title: "발표 심사 일정",
+        body:
+          "본선 발표 심사 시간과 입실 마감 시간이 어떻게 되는지 사전 안내 받을 수 있을까요?",
+        answer:
+          "발표 심사 상세 일정은 공지로 순차 안내됩니다. 당일 입실은 세션 시작 20분 전까지 완료해 주세요.",
+      },
+    ];
+
+    for (const seed of demoQnaSeed) {
+      const { data: participantRows, error: participantReadError } = await supabase
+        .from("Participants")
+        .select("*")
+        .eq("SpaceID", airforceSpace.SpaceID)
+        .eq("Nickname", seed.nickname)
+        .limit(1);
+      if (participantReadError) throw participantReadError;
+
+      let participant = participantRows?.[0] || null;
+      if (!participant) {
+        const { data: createdParticipant, error: createParticipantError } = await supabase
+          .from("Participants")
+          .insert({
+            SpaceID: airforceSpace.SpaceID,
+            Nickname: seed.nickname,
+            EntryCodeInput: "ROKAF26",
+            JoinedVia: "code",
+            Status: "active",
+            CreatedAt: now,
+            UpdatedAt: now,
+          })
+          .select("*")
+          .single();
+        if (createParticipantError) throw createParticipantError;
+        participant = createdParticipant;
+      }
+
+      const { data: questionRows, error: questionReadError } = await supabase
+        .from("Questions")
+        .select("*")
+        .eq("SpaceID", airforceSpace.SpaceID)
+        .eq("ParticipantID", participant.ParticipantID)
+        .eq("Title", seed.title)
+        .limit(1);
+      if (questionReadError) throw questionReadError;
+
+      let question = questionRows?.[0] || null;
+      if (!question) {
+        const { data: createdQuestion, error: createQuestionError } = await supabase
+          .from("Questions")
+          .insert({
+            SpaceID: airforceSpace.SpaceID,
+            ParticipantID: participant.ParticipantID,
+            Title: seed.title,
+            BodyText: seed.body,
+            Status: "answered",
+            IsPrivate: true,
+            AssignedAdminID: adminId,
+            CreatedAt: now,
+            UpdatedAt: now,
+          })
+          .select("*")
+          .single();
+        if (createQuestionError) throw createQuestionError;
+        question = createdQuestion;
+      }
+
+      const { data: messageRows, error: messageReadError } = await supabase
+        .from("QuestionMessages")
+        .select("*")
+        .eq("QuestionID", question.QuestionID)
+        .eq("SenderType", "admin")
+        .eq("MessageText", seed.answer)
+        .limit(1);
+      if (messageReadError) throw messageReadError;
+
+      if (!messageRows?.length) {
+        const { error: createMessageError } = await supabase
+          .from("QuestionMessages")
+          .insert({
+            QuestionID: question.QuestionID,
+            SenderType: "admin",
+            AdminID: adminId,
+            ParticipantID: participant.ParticipantID,
+            MessageText: seed.answer,
+            IsInternalNote: false,
+            CreatedAt: now,
+          });
+        if (createMessageError) throw createMessageError;
+      }
+    }
+
     res.json({
       success: true,
       data: {
         airforceSpaceId: airforceSpace.SpaceID,
         copsSpaceId: copsSpace.SpaceID,
+        seededQnaCount: demoQnaSeed.length,
       },
-      message: "포스트/핀 상태가 시연 기본값으로 복구되었습니다.",
+      message: "포스트/핀 상태 및 시연 Q&A가 기본 포맷으로 복구되었습니다.",
     });
   }),
 );

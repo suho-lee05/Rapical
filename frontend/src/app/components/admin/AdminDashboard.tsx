@@ -353,13 +353,16 @@ export function AdminDashboard() {
 
   const handleRestorePosts = async () => {
     const confirmed = window.confirm(
-      "포스트/핀 상태만 시연 기본값으로 복구할까요?\n문의/참여자 데이터는 유지됩니다.",
+      "포스트/핀 상태와 시연용 Q&A(3개)를 기본 포맷으로 복구할까요?\n기존 문의/참여자 데이터는 유지됩니다.",
     );
     if (!confirmed) return;
     try {
       setRestoringPosts(true);
-      await api.restoreDemoPosts();
-      toast.success("포스트/핀 상태 복구 완료");
+      const result = await api.restoreDemoPosts();
+      toast.success(
+        `포스트/핀 + 시연 Q&A ${result.seededQnaCount}건 복구 완료`,
+      );
+      await loadQuestions(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "포스트 복구 실패";
       toast.error(message);

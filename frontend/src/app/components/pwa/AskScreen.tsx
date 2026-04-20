@@ -10,10 +10,10 @@ import { getParticipantSession } from "../../lib/participant-session";
 
 const categories = ["Schedule", "Booth", "Lost & Found", "Location", "Ticket", "Other"];
 const exampleQuestions = [
-  "불꽃놀이는 몇 시에 시작하나요?",
-  "Gate B는 어디에 있나요?",
-  "분실물은 어디에 문의하나요?",
-  "재입장 가능한가요?",
+  "최종 제출은 4월 22일 낮 12시 정각 마감인가요?",
+  "팀원 변경 신청은 어디에서 할 수 있나요?",
+  "발표 심사 시간표는 언제 공지되나요?",
+  "마감 직전 업로드 지연 시 인정 기준이 있나요?",
 ];
 
 export function AskScreen() {

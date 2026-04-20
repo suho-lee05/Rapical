@@ -293,7 +293,7 @@ export const api = {
     });
   },
   restoreDemoPosts() {
-    return request<{ airforceSpaceId: number; copsSpaceId: number }>(
+    return request<{ airforceSpaceId: number; copsSpaceId: number; seededQnaCount: number }>(
       "/admins/demo-restore-posts",
       {
         method: "POST",
